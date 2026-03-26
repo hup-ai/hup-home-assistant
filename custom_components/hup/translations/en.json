@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Hup",
+        "description": "Enter your Hup API key and select a camera to monitor.",
+        "data": {
+          "api_key": "API Key",
+          "camera_entity": "Camera",
+          "snapshot_interval": "Snapshot interval"
+        },
+        "data_description": {
+          "api_key": "Your external device API key from the Hup app (starts with hup_ext_).",
+          "camera_entity": "The camera to capture snapshots from.",
+          "snapshot_interval": "How often to capture and upload a snapshot (in minutes)."
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API key. Check your key in the Hup app under Settings.",
+      "invalid_key_format": "API key must start with hup_ext_.",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This camera is already configured with Hup."
+    }
+  }
+}
