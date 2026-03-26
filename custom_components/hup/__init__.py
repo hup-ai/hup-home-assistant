@@ -14,7 +14,7 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import API_URL, CONF_CAMERA_ENTITY, CONF_SNAPSHOT_INTERVAL, DOMAIN
+from .const import API_URL, CONF_CAMERA_ENTITY, CONF_DEVICE_ID, CONF_SNAPSHOT_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hup from a config entry."""
     api_key = entry.data[CONF_API_KEY]
     camera_entity = entry.data[CONF_CAMERA_ENTITY]
+    device_id = entry.data[CONF_DEVICE_ID]
     interval = int(entry.data[CONF_SNAPSHOT_INTERVAL])
 
     async def _capture_and_upload(_now=None) -> None:
@@ -35,7 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         try:
             b64 = base64.b64encode(image.content).decode("utf-8")
-            payload = {"base64Image": b64}
+            payload = {"base64Image": b64, "deviceId": device_id}
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(

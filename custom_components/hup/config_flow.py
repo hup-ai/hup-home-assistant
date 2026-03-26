@@ -23,6 +23,7 @@ from homeassistant.helpers.selector import (
 from .const import (
     API_URL,
     CONF_CAMERA_ENTITY,
+    CONF_DEVICE_ID,
     CONF_SNAPSHOT_INTERVAL,
     DEFAULT_SNAPSHOT_INTERVAL,
     DOMAIN,
@@ -61,6 +62,9 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_API_KEY): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                    ),
+                    vol.Required(CONF_DEVICE_ID): TextSelector(
+                        TextSelectorConfig(type=TextSelectorType.TEXT)
                     ),
                     vol.Required(CONF_CAMERA_ENTITY): EntitySelector(
                         EntitySelectorConfig(domain="camera")
