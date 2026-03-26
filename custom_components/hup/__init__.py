@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import logging
 from datetime import timedelta
 
@@ -33,14 +34,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             return
 
         try:
+            b64 = base64.b64encode(image.content).decode("utf-8")
+            payload = {"base64Image": b64}
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     API_URL,
                     headers={
                         "x-api-key": api_key,
-                        "Content-Type": "image/jpeg",
+                        "Content-Type": "application/json",
                     },
-                    data=image.content,
+                    json=payload,
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     if resp.status == 200:
