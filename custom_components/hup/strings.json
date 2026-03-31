@@ -3,14 +3,16 @@
     "step": {
       "user": {
         "title": "Connect to Hup",
-        "description": "Enter your Hup API key and select a camera to monitor.",
+        "description": "Enter your Hup webhook URL, API key, and select a camera to monitor.",
         "data": {
+          "webhook_url": "Webhook URL",
           "api_key": "API Key",
           "device_id": "Device ID",
           "camera_entity": "Camera",
           "snapshot_interval": "Snapshot interval"
         },
         "data_description": {
+          "webhook_url": "The webhook URL generated in the Hup app for receiving events.",
           "api_key": "Your external device API key from the Hup app (starts with hup_ext_).",
           "device_id": "The device ID for this camera in Hup (found in the Hup app under your external device settings).",
           "camera_entity": "The camera to capture snapshots from.",

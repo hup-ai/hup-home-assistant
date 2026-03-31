@@ -14,13 +14,14 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
 
-from .const import API_URL, CONF_CAMERA_ENTITY, CONF_DEVICE_ID, CONF_SNAPSHOT_INTERVAL, DOMAIN
+from .const import CONF_CAMERA_ENTITY, CONF_DEVICE_ID, CONF_SNAPSHOT_INTERVAL, CONF_WEBHOOK_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hup from a config entry."""
+    webhook_url = entry.data[CONF_WEBHOOK_URL]
     api_key = entry.data[CONF_API_KEY]
     camera_entity = entry.data[CONF_CAMERA_ENTITY]
     device_id = entry.data[CONF_DEVICE_ID]
@@ -40,7 +41,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    API_URL,
+                    webhook_url,
                     headers={
                         "x-api-key": api_key,
                         "Content-Type": "application/json",

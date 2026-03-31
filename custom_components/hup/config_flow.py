@@ -21,10 +21,10 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    API_URL,
     CONF_CAMERA_ENTITY,
     CONF_DEVICE_ID,
     CONF_SNAPSHOT_INTERVAL,
+    CONF_WEBHOOK_URL,
     DEFAULT_SNAPSHOT_INTERVAL,
     DOMAIN,
 )
@@ -44,10 +44,12 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             api_key = user_input[CONF_API_KEY]
 
+            webhook_url = user_input[CONF_WEBHOOK_URL]
+
             if not api_key.startswith("hup_ext_"):
                 errors["base"] = "invalid_key_format"
             else:
-                valid = await self._validate_api_key(api_key)
+                valid = await self._validate_api_key(webhook_url, api_key)
                 if valid:
                     camera = user_input[CONF_CAMERA_ENTITY]
                     return self.async_create_entry(
@@ -60,6 +62,9 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
+                    vol.Required(CONF_WEBHOOK_URL): TextSelector(
+                        TextSelectorConfig(type=TextSelectorType.URL)
+                    ),
                     vol.Required(CONF_API_KEY): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.PASSWORD)
                     ),
@@ -86,12 +91,12 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _validate_api_key(self, api_key: str) -> bool:
-        """Validate the API key by making a test request."""
+    async def _validate_api_key(self, webhook_url: str, api_key: str) -> bool:
+        """Validate the API key by making a test request to the webhook URL."""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    API_URL,
+                    webhook_url,
                     headers={
                         "x-api-key": api_key,
                         "Content-Type": "image/jpeg",
