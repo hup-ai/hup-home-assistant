@@ -27,12 +27,14 @@
     "step": {
       "init": {
         "title": "Monitored Entities",
-        "description": "Select the entities to send events to Hup for. You can change this at any time.",
+        "description": "Select entities to monitor and configure camera capture.",
         "data": {
-          "entities": "Entities"
+          "entities": "Entities",
+          "camera_interval": "Camera capture interval"
         },
         "data_description": {
-          "entities": "Select cameras, sensors, lights, switches, or any other entities to monitor."
+          "entities": "Select cameras, sensors, lights, switches, or any other entities to monitor.",
+          "camera_interval": "How often to capture and stream camera snapshots to Hup (in seconds). Set to 0 to only capture on state changes."
         }
       }
     }

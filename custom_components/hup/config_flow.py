@@ -18,14 +18,19 @@ from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
 )
 
 from .const import (
+    CONF_CAMERA_INTERVAL,
     CONF_ENTITIES,
     CONF_WEBHOOK_URL,
+    DEFAULT_CAMERA_INTERVAL,
     DOMAIN,
 )
 
@@ -90,23 +95,25 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     json={"type": "validation"},
                     timeout=aiohttp.ClientTimeout(total=10),
                 ) as resp:
-                    # 401 = bad key, anything else means the key is valid
                     return resp.status != 401
         except (aiohttp.ClientError, TimeoutError):
             return False
 
 
 class HupOptionsFlow(OptionsFlow):
-    """Handle Hup options — add/remove monitored entities."""
+    """Handle Hup options — entities and camera settings."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage the monitored entities."""
+        """Manage monitored entities and camera interval."""
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
         current_entities = self.config_entry.options.get(CONF_ENTITIES, [])
+        current_interval = self.config_entry.options.get(
+            CONF_CAMERA_INTERVAL, DEFAULT_CAMERA_INTERVAL
+        )
 
         return self.async_show_form(
             step_id="init",
@@ -115,6 +122,17 @@ class HupOptionsFlow(OptionsFlow):
                     vol.Optional(
                         CONF_ENTITIES, default=current_entities
                     ): EntitySelector(EntitySelectorConfig(multiple=True)),
+                    vol.Required(
+                        CONF_CAMERA_INTERVAL, default=current_interval
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0,
+                            max=3600,
+                            step=1,
+                            unit_of_measurement="seconds",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    ),
                 }
             ),
         )
