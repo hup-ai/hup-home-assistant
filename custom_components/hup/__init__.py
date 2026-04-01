@@ -4,17 +4,15 @@ from __future__ import annotations
 
 import base64
 import logging
-from datetime import timedelta
 
 import aiohttp
 
 from homeassistant.components.camera import async_get_image
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.const import CONF_API_KEY, EVENT_STATE_CHANGED
+from homeassistant.core import Event, HomeAssistant
 
-from .const import CONF_CAMERA_ENTITY, CONF_DEVICE_ID, CONF_SNAPSHOT_INTERVAL, CONF_WEBHOOK_URL, DOMAIN
+from .const import CONF_DEVICE_ID, CONF_ENTITIES, CONF_WEBHOOK_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,22 +21,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hup from a config entry."""
     webhook_url = entry.data[CONF_WEBHOOK_URL]
     api_key = entry.data[CONF_API_KEY]
-    camera_entity = entry.data[CONF_CAMERA_ENTITY]
     device_id = entry.data[CONF_DEVICE_ID]
-    interval = int(entry.data[CONF_SNAPSHOT_INTERVAL])
+    watched_entities = set(entry.data[CONF_ENTITIES])
 
-    async def _capture_and_upload(_now=None) -> None:
-        """Capture a snapshot and upload to Hup."""
+    async def _post_to_webhook(payload: dict) -> None:
+        """Post a payload to the Hup webhook."""
         try:
-            image = await async_get_image(hass, camera_entity)
-        except Exception:
-            _LOGGER.error("Failed to get snapshot from %s", camera_entity)
-            return
-
-        try:
-            b64 = base64.b64encode(image.content).decode("utf-8")
-            payload = {"base64Image": b64, "deviceId": device_id}
-
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     webhook_url,
@@ -51,22 +39,60 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 ) as resp:
                     if resp.status == 200:
                         _LOGGER.debug(
-                            "Uploaded snapshot from %s to Hup", camera_entity
+                            "Sent event for %s to Hup",
+                            payload.get("entityId"),
                         )
                     else:
                         body = await resp.text()
                         _LOGGER.warning(
-                            "Hup upload failed (%s): %s", resp.status, body
+                            "Hup webhook failed (%s): %s", resp.status, body
                         )
         except (aiohttp.ClientError, TimeoutError):
-            _LOGGER.error("Failed to upload snapshot to Hup")
+            _LOGGER.error(
+                "Failed to send event to Hup for %s", payload.get("entityId")
+            )
 
-    # Run immediately on setup, then on interval
-    hass.async_create_task(_capture_and_upload())
+    async def _on_state_changed(event: Event) -> None:
+        """Handle a state change event for watched entities."""
+        entity_id = event.data.get("entity_id")
+        if entity_id not in watched_entities:
+            return
 
-    cancel = async_track_time_interval(
-        hass, _capture_and_upload, timedelta(minutes=interval)
-    )
+        new_state = event.data.get("new_state")
+        old_state = event.data.get("old_state")
+
+        if new_state is None:
+            return
+
+        friendly_name = new_state.attributes.get("friendly_name", entity_id)
+
+        # Consistent payload — image is always present (null for non-cameras)
+        payload = {
+            "deviceId": device_id,
+            "entityId": entity_id,
+            "name": friendly_name,
+            "domain": entity_id.split(".")[0],
+            "state": new_state.state,
+            "attributes": dict(new_state.attributes),
+            "oldState": old_state.state if old_state else None,
+            "image": None,
+        }
+
+        # For cameras, capture a snapshot into the image field
+        if entity_id.startswith("camera."):
+            try:
+                image = await async_get_image(hass, entity_id)
+                payload["image"] = base64.b64encode(
+                    image.content
+                ).decode("utf-8")
+            except Exception:
+                _LOGGER.debug(
+                    "Could not capture snapshot from %s", entity_id
+                )
+
+        await _post_to_webhook(payload)
+
+    cancel = hass.bus.async_listen(EVENT_STATE_CHANGED, _on_state_changed)
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = cancel

@@ -12,20 +12,15 @@ from homeassistant.const import CONF_API_KEY
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
-    NumberSelector,
-    NumberSelectorConfig,
-    NumberSelectorMode,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
 )
 
 from .const import (
-    CONF_CAMERA_ENTITY,
     CONF_DEVICE_ID,
-    CONF_SNAPSHOT_INTERVAL,
+    CONF_ENTITIES,
     CONF_WEBHOOK_URL,
-    DEFAULT_SNAPSHOT_INTERVAL,
     DOMAIN,
 )
 
@@ -43,7 +38,6 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             api_key = user_input[CONF_API_KEY]
-
             webhook_url = user_input[CONF_WEBHOOK_URL]
 
             if not api_key.startswith("hup_ext_"):
@@ -51,9 +45,8 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
             else:
                 valid = await self._validate_api_key(webhook_url, api_key)
                 if valid:
-                    camera = user_input[CONF_CAMERA_ENTITY]
                     return self.async_create_entry(
-                        title=f"Hup ({camera})",
+                        title="Hup",
                         data=user_input,
                     )
                 errors["base"] = "invalid_auth"
@@ -71,20 +64,8 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_DEVICE_ID): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.TEXT)
                     ),
-                    vol.Required(CONF_CAMERA_ENTITY): EntitySelector(
-                        EntitySelectorConfig(domain="camera")
-                    ),
-                    vol.Required(
-                        CONF_SNAPSHOT_INTERVAL,
-                        default=DEFAULT_SNAPSHOT_INTERVAL,
-                    ): NumberSelector(
-                        NumberSelectorConfig(
-                            min=1,
-                            max=60,
-                            step=1,
-                            unit_of_measurement="minutes",
-                            mode=NumberSelectorMode.BOX,
-                        )
+                    vol.Required(CONF_ENTITIES): EntitySelector(
+                        EntitySelectorConfig(multiple=True)
                     ),
                 }
             ),
@@ -99,9 +80,9 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     webhook_url,
                     headers={
                         "x-api-key": api_key,
-                        "Content-Type": "image/jpeg",
+                        "Content-Type": "application/json",
                     },
-                    data=b"\xff\xd8\xff\xe0",  # minimal JPEG header
+                    json={"type": "validation"},
                     timeout=aiohttp.ClientTimeout(total=10),
                 ) as resp:
                     # 401 = bad key, anything else means the key is valid

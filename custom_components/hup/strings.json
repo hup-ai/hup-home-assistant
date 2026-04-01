@@ -3,20 +3,18 @@
     "step": {
       "user": {
         "title": "Connect to Hup",
-        "description": "Enter your Hup webhook URL, API key, and select a camera to monitor.",
+        "description": "Enter your Hup webhook URL, API key, and select the devices you want to monitor.",
         "data": {
           "webhook_url": "Webhook URL",
           "api_key": "API Key",
           "device_id": "Device ID",
-          "camera_entity": "Camera",
-          "snapshot_interval": "Snapshot interval"
+          "entities": "Entities"
         },
         "data_description": {
           "webhook_url": "The webhook URL generated in the Hup app for receiving events.",
           "api_key": "Your external device API key from the Hup app (starts with hup_ext_).",
-          "device_id": "The device ID for this camera in Hup (found in the Hup app under your external device settings).",
-          "camera_entity": "The camera to capture snapshots from.",
-          "snapshot_interval": "How often to capture and upload a snapshot (in minutes)."
+          "device_id": "The device ID for this Home Assistant instance in Hup.",
+          "entities": "Select the entities to send events to Hup for."
         }
       }
     },
@@ -26,7 +24,7 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "This camera is already configured with Hup."
+      "already_configured": "Hup is already configured."
     }
   }
 }
