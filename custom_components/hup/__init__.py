@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, EVENT_STATE_CHANGED
 from homeassistant.core import Event, HomeAssistant
 
-from .const import CONF_DEVICE_ID, CONF_ENTITIES, CONF_WEBHOOK_URL, DOMAIN
+from .const import CONF_ENTITIES, CONF_WEBHOOK_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +21,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hup from a config entry."""
     webhook_url = entry.data[CONF_WEBHOOK_URL]
     api_key = entry.data[CONF_API_KEY]
-    device_id = entry.data[CONF_DEVICE_ID]
     watched_entities: set[str] = set(entry.options.get(CONF_ENTITIES, []))
 
     async def _post_to_webhook(payload: dict) -> None:
@@ -68,7 +67,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # Consistent payload — image is always present (null for non-cameras)
         payload = {
-            "deviceId": device_id,
             "entityId": entity_id,
             "name": friendly_name,
             "domain": entity_id.split(".")[0],

@@ -24,7 +24,6 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
-    CONF_DEVICE_ID,
     CONF_ENTITIES,
     CONF_WEBHOOK_URL,
     DOMAIN,
@@ -72,9 +71,6 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Required(CONF_API_KEY): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.PASSWORD)
-                    ),
-                    vol.Required(CONF_DEVICE_ID): TextSelector(
-                        TextSelectorConfig(type=TextSelectorType.TEXT)
                     ),
                 }
             ),

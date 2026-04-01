@@ -6,13 +6,11 @@
         "description": "Enter your Hup webhook URL and API key. You can add devices to monitor after setup.",
         "data": {
           "webhook_url": "Webhook URL",
-          "api_key": "API Key",
-          "device_id": "Device ID"
+          "api_key": "API Key"
         },
         "data_description": {
           "webhook_url": "The webhook URL generated in the Hup app for receiving events.",
-          "api_key": "Your external device API key from the Hup app (starts with hup_ext_).",
-          "device_id": "The device ID for this Home Assistant instance in Hup."
+          "api_key": "Your external device API key from the Hup app (starts with hup_ext_)."
         }
       }
     },
