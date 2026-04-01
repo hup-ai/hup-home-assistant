@@ -3,7 +3,7 @@
   "name": "Hup",
   "codeowners": ["@hup-ai"],
   "config_flow": true,
-  "dependencies": ["camera"],
+  "dependencies": [],
   "documentation": "https://github.com/hup-ai/hup-home-assistant",
   "integration_type": "service",
   "iot_class": "cloud_push",
