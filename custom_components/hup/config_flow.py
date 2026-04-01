@@ -7,8 +7,14 @@ from typing import Any
 import aiohttp
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_API_KEY
+from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
@@ -30,10 +36,16 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> HupOptionsFlow:
+        """Get the options flow for this handler."""
+        return HupOptionsFlow()
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
+        """Handle the initial step — connection details only."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -64,9 +76,6 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_DEVICE_ID): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.TEXT)
                     ),
-                    vol.Required(CONF_ENTITIES): EntitySelector(
-                        EntitySelectorConfig(multiple=True)
-                    ),
                 }
             ),
             errors=errors,
@@ -89,3 +98,27 @@ class HupConfigFlow(ConfigFlow, domain=DOMAIN):
                     return resp.status != 401
         except (aiohttp.ClientError, TimeoutError):
             return False
+
+
+class HupOptionsFlow(OptionsFlow):
+    """Handle Hup options — add/remove monitored entities."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the monitored entities."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        current_entities = self.config_entry.options.get(CONF_ENTITIES, [])
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_ENTITIES, default=current_entities
+                    ): EntitySelector(EntitySelectorConfig(multiple=True)),
+                }
+            ),
+        )

@@ -22,7 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     webhook_url = entry.data[CONF_WEBHOOK_URL]
     api_key = entry.data[CONF_API_KEY]
     device_id = entry.data[CONF_DEVICE_ID]
-    watched_entities = set(entry.data[CONF_ENTITIES])
+    watched_entities: set[str] = set(entry.options.get(CONF_ENTITIES, []))
 
     async def _post_to_webhook(payload: dict) -> None:
         """Post a payload to the Hup webhook."""
@@ -92,17 +92,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         await _post_to_webhook(payload)
 
+    def _update_entities() -> None:
+        """Update watched entities when options change."""
+        nonlocal watched_entities
+        watched_entities = set(entry.options.get(CONF_ENTITIES, []))
+
+    entry.async_on_unload(entry.add_update_listener(_on_options_update))
+
     cancel = hass.bus.async_listen(EVENT_STATE_CHANGED, _on_state_changed)
 
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = cancel
+    hass.data[DOMAIN][entry.entry_id] = {"cancel": cancel, "update": _update_entities}
 
     return True
 
 
+async def _on_options_update(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options update — refresh watched entities without reloading."""
+    data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if data:
+        data["update"]()
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    cancel = hass.data[DOMAIN].pop(entry.entry_id, None)
-    if cancel:
-        cancel()
+    data = hass.data[DOMAIN].pop(entry.entry_id, None)
+    if data:
+        data["cancel"]()
     return True

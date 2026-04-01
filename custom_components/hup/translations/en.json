@@ -3,18 +3,16 @@
     "step": {
       "user": {
         "title": "Connect to Hup",
-        "description": "Enter your Hup webhook URL, API key, and select the devices you want to monitor.",
+        "description": "Enter your Hup webhook URL and API key. You can add devices to monitor after setup.",
         "data": {
           "webhook_url": "Webhook URL",
           "api_key": "API Key",
-          "device_id": "Device ID",
-          "entities": "Entities"
+          "device_id": "Device ID"
         },
         "data_description": {
           "webhook_url": "The webhook URL generated in the Hup app for receiving events.",
           "api_key": "Your external device API key from the Hup app (starts with hup_ext_).",
-          "device_id": "The device ID for this Home Assistant instance in Hup.",
-          "entities": "Select the entities to send events to Hup for."
+          "device_id": "The device ID for this Home Assistant instance in Hup."
         }
       }
     },
@@ -25,6 +23,20 @@
     },
     "abort": {
       "already_configured": "Hup is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Monitored Entities",
+        "description": "Select the entities to send events to Hup for. You can change this at any time.",
+        "data": {
+          "entities": "Entities"
+        },
+        "data_description": {
+          "entities": "Select cameras, sensors, lights, switches, or any other entities to monitor."
+        }
+      }
     }
   }
 }
